@@ -237,7 +237,7 @@ clear all;
 	%заполнение массивов для построение графиков 
 	%S2(x_n), sigma_down(x_n), sigma_up(x_n)  
 	Sl = varArray.*(N - 1)./chi2inv(1 - alpha, N - 1);
-	plot(N, Sl, 'b');
+	plot(N, Sl, 'b');	
 
 	Sh = varArray.*(N - 1)./chi2inv(alpha, N - 1);
 	plot(N, Sh, 'r');
