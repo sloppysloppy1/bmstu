@@ -1,0 +1,204 @@
+\floatsetup[table]{style=Plaintop,floatrowsep=qquad}
+% задание и сама лабораторная работа
+\newpage
+\section*{Задание}
+\addcontentsline{toc}{section}{\tocsecindent{Задание}}
+\large
+\textbf{Цель работы: }Получение навыков разработки  алгоритмов решения задачи Коши при реализации моделей, построенных на системе ОДУ, с использованием методов Рунге-Кутта 2-го и 4-го порядков точности.\\
+\textbf{Исходные данные:}\\
+Задана система электротехнических уравнений, описывающих разрядный контур, включающий постоянное активное сопротивление, нелинейное сопротивление, зависящее от тока, индуктивность и емкость. 
+
+\begin{equation}
+\begin{cases}
+\frac{dI}{dT} = \frac{U - (R_k + R_p(I))I}{L_k}\\
+\frac{dU}{dt} = -\frac{I}{C_k}\\
+\end{cases}
+\end{equation}
+Начальные условия:
+\begin{eqnarray}
+t = 0, I=I_0,U=U_0, \\ \nonumber\text{где I, U  - ток и напряжение на конденсаторе.}
+\end{eqnarray}
+Сопротивление $R_p$ можно рассчитать по формуле
+\begin{equation}
+R_p = \frac{l_p}{2\pi R^2 \int_0^1 \sigma (T(z))zdz}
+\end{equation}
+Для функции $T(z)$ следует применить выражение
+\begin{equation}
+T(z) = T_0+(T_w - T_0)z^m.
+\end{equation}
+Параметры $T_0,m$ находятся интерполяцией из табл. 1 при известном токе I.\\
+Коэффициент электропроводности $\sigma(T)$ зависит от T и рассчитывается интерполяцией из табл.2.
+\begin{table}[!h]
+\begin{floatrow}
+\ttabbox[\FBwidth]{\caption{}}
+{\begin{tabular}{|c|c|c|}
+	\hline
+	I, A		 & $T_o$, K & m \\
+	\hline
+	0.5 & 6730 & 0.5 \\
+	\hline
+	1 & 6790 & 0.55 \\
+	\hline
+	5 & 7150 & 1.7 \\
+	\hline
+	10 & 7270 & 3 \\
+	\hline
+	50 & 8010 & 11 \\
+	\hline
+	200 & 9185 & 32 \\
+	\hline
+	400 & 10010 & 40 \\
+	\hline
+	800 & 11140 & 41 \\
+	\hline
+	1200 & 12010 & 39 \\
+	\hline
+\end{tabular}}
+\ttabbox[\FBwidth]{\caption{}}
+	{\begin{tabular}{|c|c|}
+		\hline
+		T, K & $\sigma, \frac{1}{\text{Ом} \cdot \text{см}} $ \\
+		\hline
+		4000 & 0.031 \\
+		\hline
+		5000 & 0.27 \\
+		\hline
+		6000 & 2.05 \\
+		\hline
+		7000 & 6.06 \\
+		\hline
+		8000 & 12 \\
+		\hline
+		9000 & 19.9 \\
+		\hline
+		10000 & 29.6 \\
+		\hline
+		11000 & 41.1 \\
+		\hline
+		12000 & 54.1 \\
+		\hline
+		13000 & 67.7 \\
+		\hline
+		14000 & 81.5 \\
+		\hline
+	\end{tabular}}	
+\end{floatrow}
+\end{table}
+\newline Параметры разрядного контура:
+\begin{eqnarray}
+R=0.35 см,l_\text{э}=12 см,L_k=187 10^{-6} Гн,C_k=268 10^{-6} Ф\\ \nonumber
+R_k=0.25 Ом,U_{co}=1400 В,I_o=0..3 A,T_w=2000 K
+\end{eqnarray}
+Для справки:  при указанных параметрах длительность импульса около $600 $ мкс, максимальный ток – около $800 $ А.
+\subsection*{Задания к лабораторной}
+1. Построить графики зависимости отвремени импульса $t$: $I(t),U(t),R_p(t),I(t)\cdot R_p(t),T_0(t)$ при заданных выше параметрах. На одном из графиков привести результаты вычислений двумя методов разных порядков точности. Показать, как влияет выбор метода на шаг сетки.\\
+2. График зависимости $I(t)$ при $R_k+R_p=0$. Обратить внимание на то, что в этом случае колебания тока будут не затухающими.\\
+3. График зависимости $I(t)$ при $R_k = 200$ Ом в интервале значений $t$ $0-20$ мкс.
+
+\newpage
+\section*{Листинг кода}
+\addcontentsline{toc}{section}{\tocsecindent{Листинг кода}}
+В данном разделе будет представлен листинг кода программы.
+
+\begin{lstlisting}[label=some-code,caption= Логарифмическая интерполяция]
+def log_interp(x, y):
+	log_x = np.log10(x)
+	log_y = np.log10(y)
+	lin_interp = interpolate.interp1d(logx, logy, fill_value='extrapolate')
+	log_interp = lambda dd: np.power(10.0, lin_interp(np.log10(dd)))
+	return log_interp
+
+\end{lstlisting}
+
+\begin{lstlisting}[label=some-code1,caption=Метод Рунге-Кутта 2-го порядка]
+def runge-kutta2():
+	alpha=1.
+	
+	res_time = []
+	res_curr = []
+	res_volt = []
+	res_res = []
+	res_temp = []
+	
+	t = time_start()
+	prev = initial_vector()
+
+	res_time.append(t)
+	res_cur.append(prev[0])
+	res_volt.append(prev[1])
+	res_res.append(lamp_resistance(prev[0]))
+	res_temp.append(temperature(0, prev[0]))
+	
+	while t < time_end():
+		v0 = vector_function(prev[0], prev[1])
+		
+		v1 = vector_function(prev[0] + step / (2.0 * alpha),
+		prev[1] + step / (2.0 * alpha * v0[1]))
+		prev[0] += step * ((1. - alpha) * v0[0] + alpha * v1[0])
+		prev[1] += step * ((1. - alpha) * v0[1] + alpha * v1[1])
+
+		res_time.append(t)
+		res_cur.append(prev[0])
+		res_volt.append(prev[1])
+		res_res.append(lamp_resistance(prev[0]))
+		res_temp.append(temperature(0, prev[0]))
+		
+		t += step
+	
+		print(t)
+		
+	return res_time, res_cur, res_volt, res_res, res_temp
+
+
+\end{lstlisting}
+\newpage
+\begin{lstlisting}[label=some-code1,caption=Метод Рунге-Кутта 4-го порядка]
+def runge-kutta4():
+	res_time = []
+	res_curr = []
+	res_volt = []
+	res_res = []
+	res_temp = []
+
+	t = time_start()
+	prev = initial_vector()
+
+	res_time.append(t)
+	res_cur.append(prev[0])
+	res_volt.append(prev[1])
+	res_res.append(lamp_resistance(prev[0]))
+	res_temp.append(temperature(0, prev[0]))
+	
+	while t < time_end():
+	
+	v1 = vector_function(prev[0], prev[1])
+	k1 = v1[0]
+	q1 = v1[1]
+
+	v2 = vector_function(prev[0] + k1 * step / 2.0, prev[1] + q1 * step / 2.0)
+	k2 = v2[0]
+	q2 = v2[1]
+
+	v3 = vector_function(prev[0] + k2 * step / 2.0, prev[1] + q2 * step / 2.0)
+	k3 = v3[0]
+	q3 = v3[1]
+
+	v4 = vector_function(prev[0] + k3 * step, prev[1] + q3 * step)
+	k4 = v4[0]
+	q4 = v4[1]
+
+	prev[0] += step * (k1 + 2 * k2 + 2 * k3 + k4) / 6.0
+	prev[1] += step * (q1 + 2 * q2 + 2 * q3 + q4) / 6.0
+
+	res_time.append(t)
+	res_cur.append(prev[0])
+	res_volt.append(prev[1])
+	res_res.append(lamp_resistance(prev[0]))
+	res_temp.append(temperature(0, prev[0]))
+	
+	t += step
+	
+	print(t)
+
+	return res_time, res_cur, res_volt, res_res, res_temp
+\end{lstlisting}
