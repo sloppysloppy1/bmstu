@@ -1,0 +1,148 @@
+\lstset{ %
+	language=C,                % Язык программирования                % где поставить нумерацию строк (слева\справа)
+	numberstyle=\tiny,           % размер шрифта для номеров строк
+	stepnumber=1,                   % размер шага между двумя номерами строк
+	numbersep=5pt,                % как далеко отстоят номера строк от подсвечиваемого кода
+	showspaces=false,            % показывать или нет пробелы специальными отступами
+	showstringspaces=false,      % показывать или нет пробелы в строках
+	showtabs=false,             % показывать или нет табуляцию в строках
+	tabsize=2,                 % размер табуляции по умолчанию равен 2 пробелам
+	captionpos=t,              % позиция заголовка вверху [t] или внизу [b] 
+	breaklines=true,           % автоматически переносить строки (да\нет)
+	breakatwhitespace=false,       
+	frame=single,                    % Добавить рамку
+	basicstyle=\small,
+	escapebegin=\begin{russian}\commentfont,
+		escapeend=\end{russian},
+	literate={Ö}{{\"O}}1
+	{Ä}{{\"A}}1
+	{Ü}{{\"U}}1
+	{ß}{{\ss}}1
+	{ü}{{\"u}}1
+	{ä}{{\"a}}1
+	{ö}{{\"o}}1
+	{~}{{\textasciitilde}}1
+	{а}{{\selectfont\char224}}1
+	{б}{{\selectfont\char225}}1
+	{в}{{\selectfont\char226}}1
+	{г}{{\selectfont\char227}}1
+	{д}{{\selectfont\char228}}1
+	{е}{{\selectfont\char229}}1
+	{ё}{{\"e}}1
+	{ж}{{\selectfont\char230}}1
+	{з}{{\selectfont\char231}}1
+	{и}{{\selectfont\char232}}1
+	{й}{{\selectfont\char233}}1
+	{к}{{\selectfont\char234}}1
+	{л}{{\selectfont\char235}}1
+	{м}{{\selectfont\char236}}1
+	{н}{{\selectfont\char237}}1
+	{о}{{\selectfont\char238}}1
+	{п}{{\selectfont\char239}}1
+	{р}{{\selectfont\char240}}1
+	{с}{{\selectfont\char241}}1
+	{т}{{\selectfont\char242}}1
+	{у}{{\selectfont\char243}}1
+	{ф}{{\selectfont\char244}}1
+	{х}{{\selectfont\char245}}1
+	{ц}{{\selectfont\char246}}1
+	{ч}{{\selectfont\char247}}1
+	{ш}{{\selectfont\char248}}1
+	{щ}{{\selectfont\char249}}1
+	{ъ}{{\selectfont\char250}}1
+	{ы}{{\selectfont\char251}}1
+	{ь}{{\selectfont\char252}}1
+	{э}{{\selectfont\char253}}1
+	{ю}{{\selectfont\char254}}1
+	{я}{{\selectfont\char255}}1
+	{А}{{\selectfont\char192}}1
+	{Б}{{\selectfont\char193}}1
+	{В}{{\selectfont\char194}}1
+	{Г}{{\selectfont\char195}}1
+	{Д}{{\selectfont\char196}}1
+	{Е}{{\selectfont\char197}}1
+	{Ё}{{\"E}}1
+	{Ж}{{\selectfont\char198}}1
+	{З}{{\selectfont\char199}}1
+	{И}{{\selectfont\char200}}1
+	{Й}{{\selectfont\char201}}1
+	{К}{{\selectfont\char202}}1
+	{Л}{{\selectfont\char203}}1
+	{М}{{\selectfont\char204}}1
+	{Н}{{\selectfont\char205}}1
+	{О}{{\selectfont\char206}}1
+	{П}{{\selectfont\char207}}1
+	{Р}{{\selectfont\char208}}1
+	{С}{{\selectfont\char209}}1
+	{Т}{{\selectfont\char210}}1
+	{У}{{\selectfont\char211}}1
+	{Ф}{{\selectfont\char212}}1
+	{Х}{{\selectfont\char213}}1
+	{Ц}{{\selectfont\char214}}1
+	{Ч}{{\selectfont\char215}}1
+	{Ш}{{\selectfont\char216}}1
+	{Щ}{{\selectfont\char217}}1
+	{Ъ}{{\selectfont\char218}}1
+	{Ы}{{\selectfont\char219}}1
+	{Ь}{{\selectfont\char220}}1
+	{Э}{{\selectfont\char221}}1
+	{Ю}{{\selectfont\char222}}1
+	{Я}{{\selectfont\char223}}1
+	{і}{{\selectfont\char105}}1
+	{ї}{{\selectfont\char168}}1
+	{є}{{\selectfont\char185}}1
+	{ґ}{{\selectfont\char160}}1
+	{І}{{\selectfont\char73}}1
+	{Ї}{{\selectfont\char136}}1
+	{Є}{{\selectfont\char153}}1
+	{Ґ}{{\selectfont\char128}}1
+}
+\newpage
+\section*{Задание}
+\addcontentsline{toc}{section}{\tocsecindent{Задание}}
+
+\Large В музей приходят посетители каждые 3 $\pm$ 2 минуты. На входе нужно пройти охранников и металлодетектор, что занимает 2 $\pm$ 1 минуты, однако если гость принесет бомбу (шанс 1\%), ему откажут в обслуживании. Билеты на проходящую в музее выставку можно купить только на месте. На данный момент работают 4 кассы с различным временем обслуживания: 2 $\pm$ 1, 3 $\pm$ 2, 5 $\pm$ 1 и 5 $\pm$ 2 мин. В том случае, если посетитель не говорит по-русски (шанс 15\%), его сможет обслужить только последняя касса (очередь в нее может состоять максимум из двух человек). После покупки билета посетителю следует сдать одежду в гардероб, где работают 2 сотрудницы. Если попасть к первой, сдать одежду получится за 1 минуту, но если гость ей не понравится (шанс 11\%), она откажет ему в обслуживании. Другая гардеробщица сможет обслужить посетителя за 2 $\pm$ 1 минуты, если перед ним не будет больше трех человек (иначе она также откажет ему в обслуживании). После того, как гость сдал одежду, ему останется только проследовать на экскурсию. Проверка билетов занимает 2 минуты у каждого из посетителей вне зависимости от контролера, однако каждый может отказать в обслуживании в случае неадекватного поведения (шанс 7\%).
+
+Найти вероятность отказа, используя язык GPSS.
+
+\begin{figure}[h]
+	\center{\includegraphics[width=1\linewidth]{img/111}}
+	\caption{Концептуальная модель}
+	\label{ris:image1}
+\end{figure}
+
+\newpage
+\section*{Листинг кода}
+\addcontentsline{toc}{section}{\tocsecindent{Листинг кода}}
+Ниже представлен листинг кода программы:
+\begin{figure}[h]
+	\center{\includegraphics[width=0.95\linewidth]{img/3} \\ }
+	\label{ris:image1}
+\end{figure}
+\begin{figure}[h]
+	\center{\includegraphics[width=0.95\linewidth]{img/4} \\ }
+	\label{ris:image1}
+\end{figure}
+\newpage
+\begin{figure}[h]
+	\center{\includegraphics[width=0.95\linewidth]{img/5} \\ }
+	\label{ris:image1}
+\end{figure}
+
+\section*{Результаты работы}
+\addcontentsline{toc}{section}{\tocsecindent{Результаты работы}}
+Ниже представлены результаты работы программы при 350 запросах:
+
+\begin{figure}[h]
+	\center{\includegraphics[width=0.7\linewidth]{img/6} \\ }
+	\caption{Количество отклоненных заявок (FAILED) и вероятность этого отказа (FAILED\_PERCENT), а также количество заявок, отклоненных на каждом этапе}
+	\label{ris:image1}
+\end{figure}
+
+\newpage
+
+\section*{Вывод}
+\addcontentsline{toc}{section}{\tocsecindent{Вывод}}
+Была разработана программа на языке GPSS, моделирующая музей, инфраструктура которого состоит из охранников, четырех касс, двух гардеробов и двух контролеров билетов.
+
+Результатом работы является количество посетителей, получивших отказ и вероятность этого отказа.

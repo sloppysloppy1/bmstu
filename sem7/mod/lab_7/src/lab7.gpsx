@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ExtendedGpssModel>
+  <Lines>
+    <Line Id="1">GENERATE  10,4,,300 ; приходят посетители каждые 10+- 2 минуты, всего их 300</Line>
+    <Line Id="31">;-</Line>
+    <Line Id="26">OPERATOR1 GATE NU OPER1,OPERATOR2 ; проверяем занятость первого оператора, </Line>
+    <Line Id="95">                                                                                             ; если НЕ занят - идем дальше по блоку, иначе - в блок OPERATOR2</Line>
+    <Line Id="79">SEIZE OPER1 ; занимаем первого оператора</Line>
+    <Line Id="32">                    ADVANCE 20,10; находимся у первого оператора 20+-5 минут</Line>
+    <Line Id="28">RELEASE OPER1; освобождаем первого оператора</Line>
+    <Line Id="33">                    TRANSFER ,COMPUTER1; перемещаемся в накопитель первого компьютера</Line>
+    <Line Id="2">;-</Line>
+    <Line Id="34">OPERATOR2 GATE NU OPER2,OPERATOR3 ; проверяем занятость второго оператора, </Line>
+    <Line Id="96">                                                                                             ; если НЕ занят - идем дальше по блоку, иначе - в блок OPERATOR3</Line>
+    <Line Id="82">SEIZE OPER2 ; занимаем второго оператора</Line>
+    <Line Id="83">                    ADVANCE 40,10; находимся у второго оператора 40+-5 минут</Line>
+    <Line Id="84">RELEASE OPER2; освобождаем второго оператора</Line>
+    <Line Id="85">                    TRANSFER ,COMPUTER1; перемещаемся в накопитель первого компьютера</Line>
+    <Line Id="39">;-</Line>
+    <Line Id="40">OPERATOR3 GATE NU OPER3,OPERATOR3 ; проверяем занятость третьего оператора, </Line>
+    <Line Id="97">                                                                                             ; если НЕ занят - идем дальше по блоку, иначе - в блок DECLINED</Line>
+    <Line Id="86">SEIZE OPER3 ; занимаем третьего оператора</Line>
+    <Line Id="87">                    ADVANCE 40,20; находимся у третьего оператора 40+-10 минут</Line>
+    <Line Id="88">RELEASE OPER3; освобождаем третьего оператора</Line>
+    <Line Id="89">                    TRANSFER ,COMPUTER1; перемещаемся в накопитель второго компьютера</Line>
+    <Line Id="44">;-</Line>
+    <Line Id="45">COMPUTER1 QUEUE COMP1_QUEUE ; поскольку у нас накопитель (кол-во заявок не ограничено), </Line>
+    <Line Id="100">                                                                                             ; создаем очередь и помещаем заявку туда</Line>
+    <Line Id="58">SEIZE COMP1; занимаем первый компьютер</Line>
+    <Line Id="59">                     DEPART COMP1_QUEUE; удаляем заявку из очереди</Line>
+    <Line Id="46">                    ADVANCE 15; компьютер обрабатывает заявку 15 минут</Line>
+    <Line Id="47">RELEASE COMP1; освобождаем компьютер</Line>
+    <Line Id="50"> TERMINATE 1; транзакция завершается, общий счетчик уменьшается на 1</Line>
+    <Line Id="56"></Line>
+    <Line Id="52">COMPUTER2 QUEUE COMP2_QUEUE ; поскольку у нас накопитель (кол-во заявок не ограничено), </Line>
+    <Line Id="99">                                                                                             ; создаем очередь и помещаем заявку туда</Line>
+    <Line Id="90">SEIZE COMP2; занимаем второй компьютер</Line>
+    <Line Id="91">                     DEPART COMP2_QUEUE; удаляем заявку из очереди</Line>
+    <Line Id="92">                    ADVANCE 30; компьютер обрабатывает заявку 30 минут</Line>
+    <Line Id="93">RELEASE COMP2; освобождаем компьютер</Line>
+    <Line Id="94"> TERMINATE 1; транзакция завершается, общий счетчик уменьшается на 1</Line>
+    <Line Id="51"></Line>
+    <Line Id="38">DECLINED SAVEVALUE FAILED+,1 ; инициализируем (один раз) и инкрементируем счетчик отклоненных заявок</Line>
+    <Line Id="76">SAVEVALUE FAILED_PERCENT,((FAILED/300)) ; инициализируем (один раз) и считаем процент отклоненных заявок</Line>
+    <Line Id="73">TERMINATE 1; транзакция завершается, общий счетчик уменьшается на 1</Line>
+    <Line Id="72">                      </Line>
+    <Line Id="101">                      RESET</Line>
+    <Line Id="74">START 300; инициализируем модель для 300 заявок</Line>
+    <Line Id="70"></Line>
+    <Line Id="71"></Line>
+  </Lines>
+</ExtendedGpssModel>
