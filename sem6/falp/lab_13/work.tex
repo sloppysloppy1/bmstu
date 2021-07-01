@@ -1,0 +1,292 @@
+% --- ugly internals for language definition ---
+%
+\makeatletter
+\lstset{
+	captionpos = below,
+	frame      = single,
+	columns    = fullflexible,
+	basicstyle = \small\sffamily,
+}
+% initialisation of user macros
+\newcommand\PrologPredicateStyle{}
+\newcommand\PrologVarStyle{}
+\newcommand\PrologAnonymVarStyle{}
+\newcommand\PrologAtomStyle{}
+\newcommand\PrologOtherStyle{}
+\newcommand\PrologCommentStyle{}
+
+% useful switches (to keep track of context)
+\newif\ifpredicate@prolog@
+\newif\ifwithinparens@prolog@
+
+% save definition of underscore for test
+\lst@SaveOutputDef{`_}\underscore@prolog
+
+% local variables
+\newcount\currentchar@prolog
+
+\newcommand\@testChar@prolog%
+{%
+	% if we're in processing mode...
+	\ifnum\lst@mode=\lst@Pmode%
+	\detectTypeAndHighlight@prolog%
+	\else
+	% ... or within parentheses
+	\ifwithinparens@prolog@%
+	\detectTypeAndHighlight@prolog%
+	\fi
+	\fi
+	% Some housekeeping...
+	\global\predicate@prolog@false%
+}
+
+% helper macros
+\newcommand\detectTypeAndHighlight@prolog
+{%
+	% First, assume that we have an atom.
+	\def\lst@thestyle{\PrologAtomStyle}%
+	% Test whether we have a predicate and modify the style accordingly.
+	\ifpredicate@prolog@%
+	\def\lst@thestyle{\PrologPredicateStyle}%
+	\else
+	% Test whether we have a predicate and modify the style accordingly.
+	\expandafter\splitfirstchar@prolog\expandafter{\the\lst@token}%
+	% Check whether the identifier starts by an underscore.
+	\expandafter\ifx\@testChar@prolog\underscore@prolog%
+	% Check whether the identifier is '_' (anonymous variable)
+	\ifnum\lst@length=1%
+	\let\lst@thestyle\PrologAnonymVarStyle%
+	\else
+	\let\lst@thestyle\PrologVarStyle%
+	\fi
+	\else
+	% Check whether the identifier starts by a capital letter.
+	\currentchar@prolog=65
+	\loop
+	\expandafter\ifnum\expandafter`\@testChar@prolog=\currentchar@prolog%
+	\let\lst@thestyle\PrologVarStyle%
+	\let\iterate\relax
+	\fi
+	\advance \currentchar@prolog by 1
+	\unless\ifnum\currentchar@prolog>90
+	\repeat
+	\fi
+	\fi
+}
+\newcommand\splitfirstchar@prolog{}
+\def\splitfirstchar@prolog#1{\@splitfirstchar@prolog#1\relax}
+\newcommand\@splitfirstchar@prolog{}
+\def\@splitfirstchar@prolog#1#2\relax{\def\@testChar@prolog{#1}}
+
+% helper macro for () delimiters
+\def\beginlstdelim#1#2%
+{%
+	\def\endlstdelim{\PrologOtherStyle #2\egroup}%
+	{\PrologOtherStyle #1}%
+	\global\predicate@prolog@false%
+	\withinparens@prolog@true%
+	\bgroup\aftergroup\endlstdelim%
+}
+
+% language name
+\newcommand\lang@prolog{Prolog-pretty}
+% ``normalised'' language name
+\expandafter\lst@NormedDef\expandafter\normlang@prolog%
+\expandafter{\lang@prolog}
+
+% language definition
+\expandafter\expandafter\expandafter\lstdefinelanguage\expandafter%
+{\lang@prolog}
+{%
+	language            = Prolog,
+	keywords            = {},      % reset all preset keywords
+	showstringspaces    = false,
+	alsoletter          = (,
+	alsoother           = @$,
+	moredelim           = **[is][\beginlstdelim{(}{)}]{(}{)},
+	MoreSelectCharTable =
+	\lst@DefSaveDef{`(}\opparen@prolog{\global\predicate@prolog@true\opparen@prolog},
+}
+
+% Hooking into listings to test each ``identifier''
+\newcommand\@ddedToOutput@prolog\relax
+\lst@AddToHook{Output}{\@ddedToOutput@prolog}
+
+\lst@AddToHook{PreInit}
+{%
+	\ifx\lst@language\normlang@prolog%
+	\let\@ddedToOutput@prolog\@testChar@prolog%
+	\fi
+}
+
+\lst@AddToHook{DeInit}{\renewcommand\@ddedToOutput@prolog{}}
+
+\makeatother
+%
+% --- end of ugly internals ---
+
+
+% --- definition of a custom style similar to that of Pygments ---
+% custom colors
+\definecolor{PrologPredicate}{RGB}{000,031,255}
+\definecolor{PrologVar}      {RGB}{024,021,125}
+\definecolor{PrologAnonymVar}{RGB}{000,127,000}
+\definecolor{PrologAtom}     {RGB}{186,032,032}
+\definecolor{PrologComment}  {RGB}{063,128,127}
+\definecolor{PrologOther}    {RGB}{000,000,000}
+
+% redefinition of user macros for Prolog style
+\renewcommand\PrologPredicateStyle{\color{PrologPredicate}}
+\renewcommand\PrologVarStyle{\color{PrologVar}}
+\renewcommand\PrologAnonymVarStyle{\color{PrologAnonymVar}}
+\renewcommand\PrologAtomStyle{\color{PrologAtom}}
+\renewcommand\PrologCommentStyle{\itshape\color{PrologComment}}
+\renewcommand\PrologOtherStyle{\color{PrologOther}}
+
+% custom style definition 
+\lstdefinestyle{Prolog-pygsty}
+{
+	language     = Prolog-pretty,
+	upquote      = true,
+	stringstyle  = \PrologAtomStyle,
+	commentstyle = \PrologCommentStyle,
+	literate     =
+	{:-}{{\PrologOtherStyle :-}}2
+	{,}{{\PrologOtherStyle ,}}1
+	{.}{{\PrologOtherStyle .}}1
+}
+
+
+
+\newpage
+\section*{Задание}
+\addcontentsline{toc}{section}{\tocsecindent{Задание}}
+
+\Large Составить программу, т.е. модель предметной области – базу знаний, объединив в ней информацию – знания:
+\begin{enumerate}
+
+	\item «Телефонный справочник»: Фамилия, №тел, Адрес – структура (Город, Улица, №дома, №кв);
+	\item «Автомобили»: Фамилия владельца, Марка, Цвет, Стоимость, и др;
+	\item « Вкладчики банков»: Фамилия, Банк, счет, сумма, др.
+\end{enumerate}
+Владелец может иметь несколько телефонов, автомобилей, вкладов (Факты).
+Используя правила, обеспечить возможность поиска:
+\begin{enumerate}
+\item	а) По № телефона найти: Фамилию, Марку автомобиля, Стоимость автомобиля (может быть несколько),
+\\б) Используя сформированное в пункте а) правило, по № телефона найти: только Марку автомобиля (автомобилей может быть несколько),
+\item	Используя простой, не составной вопрос: по Фамилии (уникальна в городе, но в разных городах есть однофамильцы) и Городу проживания найти:  Улицу проживания, Банки, в которых есть вклады и № телефона.
+\end{enumerate}
+Для задания 1 и задания 2: 
+для одного из вариантов ответов, и для а) и для б), описать словесно порядок поиска ответа на вопрос, указав, как выбираются знания, и, при этом, для каждого этапа унификации, выписать подстановку – наибольший общий унификатор, и соответствующие примеры термов.
+
+\newpage
+\section*{Листинг программы}
+\addcontentsline{toc}{section}{\tocsecindent{Листинг программы}}
+Ниже представлен листинг программы:
+\lstinputlisting[
+style      = Prolog-pygsty,
+caption    = {Задания 1 и 2},
+]{src/1.pro}
+
+\section*{Описание порядка поиска ответов}
+\addcontentsline{toc}{section}{\tocsecindent{Описание порядка поиска ответов}}
+\begin{table}
+	\caption{Вывод Ph\_number=+79154045900, Car\_brand=mercedes, Car\_cost=33637427 }
+\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+	\hline
+	№ шага & Сравниваемые термы; подстановка, если есть  & Результат  & Дальнейшие действия: прямой ход или откат (к чему приводит?) \\
+	\hline
+	1 & Подстановка Ph\_number = '+79154045900' в запрос get\_cars\_by\_number (Ph\_number, Car\_brand, Car\_cost) & get\_cars\_by\_number ('+79154045900', Car\_brand, Car\_cost) & прямой ход \\
+	\hline
+	2 & Поиск совпадений и подстановка '+79154045900', Car\_brand, Car\_cost в соответственное правило  get\_cars\_by\_number(Ph\_num, Car\_brand, Car\_cost) & get\_cars\_by\_number( '+79154045900', Car\_brand, Car\_cost) & прямой ход \\
+	\hline
+	3 & Подстановка Ph\_num = '+79154045900' в person(L\_name, Ph\_num, ad(Town, \_, \_, \_)) & Создается пример person(L\_name, '+79154045900', ad(Town, \_, \_, \_)) & прямой ход \\
+	\hline
+	
+	4 & Поиск person по примерy & person('klyuge', '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83))., не подходит. & откат \\
+	\hline
+	5 & Поиск person по примерy & ... & откат \\
+	\hline
+	6 & Поиск person по примерy & person('mishkin', '+79154045900', ad('kiev', 'pushkina', 25, 278)), L\_name = 'mishkin', Town = 'kiev' & прямой ход \\
+	\hline
+	7 & Подстановка в car(L\_name, Car\_brand, \_, Car\_cost, \_, Town) L\_name = 'mishkin', Car\_brand = Car\_brand, Car\_cost, Town = 'kiev' & Создается пример car('mishkin', Car\_brand, \_, Car\_cost, \_, Town, 'kiev') & прямой ход \\
+	\hline
+	8 & Поиск car по примеру & car('zayceva', 'geely', 'white', 6409914, 2015, 'kasimov'), не подходит & откат \\
+	\hline
+	9 & Поиск car по примеру & ... & откат \\
+	\hline
+	10 & Поиск car по примеру & car('mishkin', 'mercedes', 'black', 33637427, 2015, 'kiev'), Car\_brand = 'mercedes', Car\_cost = 33637427 & прямой ход \\
+	\hline
+	11 & Общий пример найден, вывод & Ph\_num = '+79154045900', Car\_brand = 'mercedes', Car\_cost = 33637427 &  \\
+	\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+	\caption{Вывод Ph\_number=+79154045900, Car\_brand=mercedes }
+	\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+		\hline
+		№ шага & Сравниваемые термы; подстановка, если есть & Результат & Дальнейшие действия: прямой ход или откат (к чему приводит?) \\
+		\hline
+		1 & Подстановка Ph\_number = '+79154045900' в запрос get\_cars\_by\_number (Ph\_number, Car\_brand, \_) & get\_cars\_by\_number( '+79154045900', Car\_brand, \_) & прямой ход \\
+		\hline
+		2 & Поиск совпадений и подстановка '+79154045900', Car\_brand в соответственное правило  get\_cars\_by\_number(Ph\_num, Car\_brand, \_) & get\_cars\_by\_number( '+79154045900', Car\_brand, \_) & прямой ход \\
+		\hline
+		3 & Подстановка Ph\_num = '+79154045900' в person(L\_name, Ph\_num, ad(Town, \_, \_, \_)) & Создается пример person(L\_name, '+79154045900', ad(Town, \_, \_, \_)) & прямой ход \\
+		\hline
+		4 & Поиск person по примерy & person('klyuge', '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83)), не подходит. & откат \\
+		\hline
+		5 & Поиск person по примерy & ... & откат \\
+		\hline
+		6 & Поиск person по примерy & person('mishkin',  '+79154045900', ad('kiev', 'pushkina', 25, 278)), L\_name = 'mishkin', Town = 'kiev' & прямой ход \\
+		\hline
+		7 & Подстановка в car(L\_name, Car\_brand, \_, \_, \_, Town) L\_name = 'mishkin', Car\_brand = Car\_brand, Car\_cost, Town = 'kiev' & Создается пример car('mishkin', Car\_brand, \_, \_, \_, Town, 'kiev') & прямой ход \\
+		\hline
+		8 & Поиск car по примеру & car('zayceva', 'geely', 'white', 6409914, 2015, 'kasimov'), не подходит & откат \\
+		\hline
+		9 & Поиск car по примеру & ... & откат \\
+		\hline
+		10 & Поиск car по примеру & car('mishkin', 'mercedes', 'black', 33637427, 2015, 'kiev'), Car\_brand = 'mercedes' & прямой ход \\
+		\hline
+		11 & Общий пример найден, вывод & Ph\_num = '+79154045900', Car\_brand = "mercedes" &  \\
+		\hline
+	\end{tabular}
+\end{table}
+\begin{table}
+	\caption{Вывод Lname=toporova, Town=saint-petersburg, Street=varshavshkoe sh., Bank=tinkoff, Tel\_num=+79165072034 }
+	\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+		\hline
+		№ шага & Сравниваемые термы; подстановка, если есть & Результат & Дальнейшие действия: прямой ход или откат (к чему приводит?) \\
+		\hline
+		1 & Подстановка Lname = 'toporova' и Town = 'saint-petersburg' в запрос get\_stuff(Lname, Town, Street, Bank, Tel\_num) & get\_stuff('toporova', 'saint-petersburg', Street, Bank, Tel\_num) & прямой ход \\
+		\hline
+		2 & Поиск совпадений и подстановка Lname = 'toporova', Town = 'saint-petersburg' Street = Street, Bank = Bank, Tel\_num = Tel\_num в соответственное правило  get\_stuff(Lname, Town, Street, Bank, Tel\_num) & ('toporova', 'saint-petersburg', Street, Bank, Tel\_num) & прямой ход \\
+		\hline
+		3 & Подстановка Lname = 'toporova', Town = 'saint-petersburg' в person(L\_name, Tel\_num, ad(Town, Street, \_, \_)) & Создается пример person('toporova', Tel\_num, ad('saint-petersburg', Street, \_, \_)) & прямой ход \\
+		\hline
+		4 & Поиск person по примерy & person('klyuge', '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83)), не подходит & откат \\
+		\hline
+		5 & Поиск person по примерy & ... & откат \\
+		\hline
+		6 & Поиск person по примерy & person('toporova', '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 100, 1151)), L\_name = 'toporova', Tel\_num = '+79165072034', Town = 'saint-petersburg', Street = 'varshavshkoe sh.' & прямой ход \\
+		\hline
+		7 & Подстановка в bank\_client(Lname, Bank, \_, \_, \_, Town) L\_name = 'toporova', Bank = Bank, Town = 'saint-petersburg' & Создается пример bank\_client('toporova', Bank, \_, \_, \_, 'saint-petersburg') & прямой ход \\
+		\hline
+	\end{tabular}
+\end{table}
+\begin{table}
+	\begin{tabular}[h!]{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+				\hline
+	8 & Поиск bank\_client по примеру & bank\_client('mishkina', 'tinkoff', 'payment', 2439027, 8, 'moscow')., не подходит & откат \\
+\hline
+9 & Поиск bank\_client по примеру & ... & откат \\
+\hline
+
+10 & Поиск bank\_client по примеру & bank\_client('toporova', 'tinkoff', 'savings', 60815175, 9, 'saint-petersburg'), Bank = 'tinkoff' & прямой ход \\
+\hline
+11 & Общий пример найден, вывод & Lname=toporova, Town=saint-petersburg, Street=varshavshkoe sh., Bank=tinkoff, Tel\_num=+79165072034 &  \\
+\hline
+\end{tabular}
+\end{table}
+
+    

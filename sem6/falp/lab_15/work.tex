@@ -1,0 +1,285 @@
+% --- ugly internals for language definition ---
+%
+\makeatletter
+\lstset{
+	captionpos = below,
+	frame      = single,
+	columns    = fullflexible,
+	basicstyle = \small\sffamily,
+}
+% initialisation of user macros
+\newcommand\PrologPredicateStyle{}
+\newcommand\PrologVarStyle{}
+\newcommand\PrologAnonymVarStyle{}
+\newcommand\PrologAtomStyle{}
+\newcommand\PrologOtherStyle{}
+\newcommand\PrologCommentStyle{}
+
+% useful switches (to keep track of context)
+\newif\ifpredicate@prolog@
+\newif\ifwithinparens@prolog@
+
+% save definition of underscore for test
+\lst@SaveOutputDef{`_}\underscore@prolog
+
+% local variables
+\newcount\currentchar@prolog
+
+\newcommand\@testChar@prolog%
+{%
+	% if we're in processing mode...
+	\ifnum\lst@mode=\lst@Pmode%
+	\detectTypeAndHighlight@prolog%
+	\else
+	% ... or within parentheses
+	\ifwithinparens@prolog@%
+	\detectTypeAndHighlight@prolog%
+	\fi
+	\fi
+	% Some housekeeping...
+	\global\predicate@prolog@false%
+}
+
+% helper macros
+\newcommand\detectTypeAndHighlight@prolog
+{%
+	% First, assume that we have an atom.
+	\def\lst@thestyle{\PrologAtomStyle}%
+	% Test whether we have a predicate and modify the style accordingly.
+	\ifpredicate@prolog@%
+	\def\lst@thestyle{\PrologPredicateStyle}%
+	\else
+	% Test whether we have a predicate and modify the style accordingly.
+	\expandafter\splitfirstchar@prolog\expandafter{\the\lst@token}%
+	% Check whether the identifier starts by an underscore.
+	\expandafter\ifx\@testChar@prolog\underscore@prolog%
+	% Check whether the identifier is '_' (anonymous variable)
+	\ifnum\lst@length=1%
+	\let\lst@thestyle\PrologAnonymVarStyle%
+	\else
+	\let\lst@thestyle\PrologVarStyle%
+	\fi
+	\else
+	% Check whether the identifier starts by a capital letter.
+	\currentchar@prolog=65
+	\loop
+	\expandafter\ifnum\expandafter`\@testChar@prolog=\currentchar@prolog%
+	\let\lst@thestyle\PrologVarStyle%
+	\let\iterate\relax
+	\fi
+	\advance \currentchar@prolog by 1
+	\unless\ifnum\currentchar@prolog>90
+	\repeat
+	\fi
+	\fi
+}
+\newcommand\splitfirstchar@prolog{}
+\def\splitfirstchar@prolog#1{\@splitfirstchar@prolog#1\relax}
+\newcommand\@splitfirstchar@prolog{}
+\def\@splitfirstchar@prolog#1#2\relax{\def\@testChar@prolog{#1}}
+
+% helper macro for () delimiters
+\def\beginlstdelim#1#2%
+{%
+	\def\endlstdelim{\PrologOtherStyle #2\egroup}%
+	{\PrologOtherStyle #1}%
+	\global\predicate@prolog@false%
+	\withinparens@prolog@true%
+	\bgroup\aftergroup\endlstdelim%
+}
+
+% language name
+\newcommand\lang@prolog{Prolog-pretty}
+% ``normalised'' language name
+\expandafter\lst@NormedDef\expandafter\normlang@prolog%
+\expandafter{\lang@prolog}
+
+% language definition
+\expandafter\expandafter\expandafter\lstdefinelanguage\expandafter%
+{\lang@prolog}
+{%
+	language            = Prolog,
+	keywords            = {},      % reset all preset keywords
+	showstringspaces    = false,
+	alsoletter          = (,
+	alsoother           = @$,
+	moredelim           = **[is][\beginlstdelim{(}{)}]{(}{)},
+	MoreSelectCharTable =
+	\lst@DefSaveDef{`(}\opparen@prolog{\global\predicate@prolog@true\opparen@prolog},
+}
+
+% Hooking into listings to test each ``identifier''
+\newcommand\@ddedToOutput@prolog\relax
+\lst@AddToHook{Output}{\@ddedToOutput@prolog}
+
+\lst@AddToHook{PreInit}
+{%
+	\ifx\lst@language\normlang@prolog%
+	\let\@ddedToOutput@prolog\@testChar@prolog%
+	\fi
+}
+
+\lst@AddToHook{DeInit}{\renewcommand\@ddedToOutput@prolog{}}
+
+\makeatother
+%
+% --- end of ugly internals ---
+
+
+% --- definition of a custom style similar to that of Pygments ---
+% custom colors
+\definecolor{PrologPredicate}{RGB}{000,031,255}
+\definecolor{PrologVar}      {RGB}{024,021,125}
+\definecolor{PrologAnonymVar}{RGB}{000,127,000}
+\definecolor{PrologAtom}     {RGB}{186,032,032}
+\definecolor{PrologComment}  {RGB}{063,128,127}
+\definecolor{PrologOther}    {RGB}{000,000,000}
+
+% redefinition of user macros for Prolog style
+\renewcommand\PrologPredicateStyle{\color{PrologPredicate}}
+\renewcommand\PrologVarStyle{\color{PrologVar}}
+\renewcommand\PrologAnonymVarStyle{\color{PrologAnonymVar}}
+\renewcommand\PrologAtomStyle{\color{PrologAtom}}
+\renewcommand\PrologCommentStyle{\itshape\color{PrologComment}}
+\renewcommand\PrologOtherStyle{\color{PrologOther}}
+
+% custom style definition 
+\lstdefinestyle{Prolog-pygsty}
+{
+	language     = Prolog-pretty,
+	upquote      = true,
+	stringstyle  = \PrologAtomStyle,
+	commentstyle = \PrologCommentStyle,
+	literate     =
+	{:-}{{\PrologOtherStyle :-}}2
+	{,}{{\PrologOtherStyle ,}}1
+	{.}{{\PrologOtherStyle .}}1
+}
+
+
+
+\newpage
+\section*{Постановка задачи}
+\addcontentsline{toc}{section}{\tocsecindent{Постановка задачи}}
+
+\Large Создать базу знаний \textbf{«Собственники»}, дополнив базу знаний, хранящую знания  (лаб. 13):
+\begin{enumerate}
+
+	\item «Телефонный справочник»: Фамилия, №тел, Адрес – структура (Город, Улица, №дома, №кв);
+	\item «Автомобили»: Фамилия владельца, Марка, Цвет, Стоимость, и др;
+	\item « Вкладчики банков»: Фамилия, Банк, счет, сумма, др.
+\end{enumerate}
+знаниями о дополнительной собственности владельца. Преобразовать знания об автомобиле к форме знаний о собственности.\\
+\textbf{Вид собственности (кроме автомобиля)}:
+\begin{enumerate}
+	\item	Строение, стоимость и другие его характеристики;
+	\item	Участок, стоимость и другие его характеристики;
+	\item	Водный\_транспорт, стоимость и другие его характеристики.
+\end{enumerate}
+Описать  и использовать вариантный домен: Собственность. Владелец может иметь, но только один объект каждого вида собственности (это касается и автомобиля), или не иметь некоторых видов собственности. \\
+Используя конъюнктивное правило и 
+разные формы задания одного вопроса (пояснять для какого №задания – какой вопрос), 
+\textbf{обеспечить возможность поиска:}\begin{enumerate}
+	\item	Названий всех объектов собственности заданного субъекта,
+	\item	Названий и стоимости всех объектов собственности заданного субъекта,
+	\item	* Разработать правило, позволяющее найти суммарную стоимость всех объектов собственности заданного субъекта.\end{enumerate}
+Для 2-го пунктa и одной фамилии составить таблицу, отражающую конкретный порядок работы системы, с объяснениями порядка работы и особенностей использования доменов (указать конкретные Т1 и Т2 и полную подстановку на каждом шаге).\\
+При желании, можно усложнить свою базу знаний, введя варианты: строение: (Дом, офис, торговый центр), участок: (садовый, территория под застройку, территория под агро-работы), Водный\_транспорт: варианты названий.
+
+\newpage
+\section*{Листинг программы}
+\addcontentsline{toc}{section}{\tocsecindent{Листинг программы}}
+Ниже представлен листинг программы:
+\lstinputlisting[
+style      = Prolog-pygsty,
+caption    = {Задания 1 и 2},
+]{src/1.pro}
+
+\section*{Описание работы системы}
+\addcontentsline{toc}{section}{\tocsecindent{Описание порядка поиска ответов}}
+
+Ниже представлен алгоритм поиска ответов на вопрос get\_property(Name, Property, Cost), Name = klyuge. Всего ответов должно получиться 3.
+\begin{table}
+	\caption{Описание работы системы на примере вывода названия собственности и ее цены}
+\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+	\hline
+	№ шага & Сравниваемые термы; подстановка, если есть  & Результат  & Дальнейшие действия: прямой ход или откат (к чему приводит?) \\
+	\hline
+	1 & Подстановка (связывание) Name = klyuge в запрос get\_property(Name, Property, Cost)  & get\_property(klyuge, Property, Cost) & прямой ход \\
+	\hline
+	2 & Поиск совпадений и подстановка (связывание) klyuge, Property и Cost в соответствующее правило  get\_property(X, Y, Z) :- person(X,\_, \_, building (Y,Z,\_))& get\_property(klyuge, Property, Cost) & прямой ход \\
+	\hline
+	3 & Подстановка X = klyuge, Y = Property и Z = Cost в person(X, \_,\_, building (Y,Z,\_)) & Создается пример person(klyuge, \_, \_, building (Property,Cost,\_)) & прямой ход \\
+	\hline
+	4 & Поиск person по примерy & person(klyuge, '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83), building(barn, 3213124, ad('volgograd', 'varshavshkoe sh.', 11, 1))), Property = building, Cost = 3213124 & прямой ход \\
+	\hline
+	5 & Общий пример найден, вывод & Name = klyuge, Property = building, Cost = 3213124 & прямой ход \\
+	\hline
+	6 & Поиск person по примерy & person(toporova, '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 11, 158), building(shed, 123124, ad('saint-petersburg', 'varshavshkoe sh.', 11, 17))), не подходит & прямой ход \\
+	\hline
+	7 & Поиск person по примеру & ... & прямой ход \\
+	\hline
+	8 & Поиск person по примеру & person(toporova, '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 33, 45), car('mitsubishi', "green", 12836628, 2018, 'saint-petersburg')), не подходит & откат, т.к дошли до конца БЗ (следовательно, тупик)  \\
+	\hline
+		9 & Поиск совпадений и подстановка (связывание) klyuge, Property и Cost в соответствующее правило  get\_property(X, Y, Z) :- person(X,\_, \_, place (Y,Z,\_,\_))& get\_property(klyuge, Property, Cost) & прямой ход \\
+	\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+		\hline
+
+	10 & Подстановка X = klyuge, Y = Property и Z = Cost в person(X, \_,\_, place (Y,Z,\_,\_)) & Создается пример person(klyuge, \_, \_, building (Property,Cost,\_,\_)) & прямой ход \\
+	\hline
+	11 & Поиск person по примерy & person(klyuge, '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83), building(barn, 3213124, ad('volgograd', 'varshavshkoe sh.', 11, 1))), не подходит & прямой ход \\
+	\hline
+	12 & Поиск person по примеру & ... & прямой ход \\
+	\hline
+	13 & Поиск person по примеру & person(klyuge, "+7912571026", ad('volgograd', 'varshavshkoe sh.', 52, 83), place(appartment, 12312312, ad('volgograd', 'varshavshkoe sh.', 52, 83), '11.11.1999')), Property = appartment, Cost = 12312312 & прямой ход \\
+	\hline
+	14 & Общий пример найден, вывод & Name = klyuge, Property = appartment, Cost = 12312312 & прямой ход \\
+	\hline
+	15 & Поиск person по примерy & person(zayceva, "+79138767153", ad('kasimov', 'lermontovskiy pr.', 83, 578), car('geely', 'white', 6409914, 2015, 'kasimov')), не подходит & прямой ход \\
+	\hline
+	16 & Поиск person по примеру & ... & прямой ход \\
+	\hline
+	17 & Поиск person по примеру & person(toporova, '+79165072034", ad('saint-petersburg', 'varshavshkoe sh.', 33, 45), car('mitsubishi', 'green', 12836628, 2018, 'saint-petersburg')), не подходит & откат, т.к дошли до конца БЗ (следовательно, тупик)  \\
+		\hline
+				18 & Поиск совпадений и подстановка (связывание) klyuge, Property и Cost в соответствующее правило  get\_property(X, Y, Z) :- person(X,\_, \_, person(X, \_, \_, car(Y,\_,Z,\_,\_))& get\_property(klyuge, Property, Cost) & прямой ход \\
+		\hline
+			19 & Подстановка X = klyuge, Y = Property и Z = Cost в person(X, \_,\_, car(Y,\_,Z,\_,\_)) & Создается пример person(klyuge, \_, \_, car(Property,\_,Cost,\_,\_)) & прямой ход \\
+		\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+	\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+		\hline
+
+	
+		20 & Поиск person по примерy & person(klyuge, '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83), building(barn, 3213124, ad('volgograd', 'varshavshkoe sh.', 11, 1))), не подходит & прямой ход \\
+		\hline
+		21 & Поиск person по примеру & ... & прямой ход \\
+		\hline
+		22 & Поиск person по примеру & person(toporova, '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 33, 45), car('mitsubishi', 'green', 12836628, 2018, 'saint-petersburg')), не подходит & откат, т.к дошли до конца БЗ (следовательно, тупик) \\
+			\hline
+		23 & Поиск совпадений и подстановка (связывание) klyuge, Property и Cost в соответствующее правило  get\_property(X, Y, Z) :- person(X,\_, \_, transport(Y,Z,\_)) & get\_property(klyuge, Property, Cost) & прямой ход \\
+		\hline
+		24 & Подстановка X = klyuge, Y = Property и Z = Cost в person(X, \_,\_, transport (Y,Z,\_)) & Создается пример person(klyuge, \_, \_, building (Property,Cost,\_)) & прямой ход \\
+		\hline
+		25 & Поиск person по примерy & person(klyuge, '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83), building(barn, 3213124, ad('volgograd', 'varshavshkoe sh.', 11, 1))), не подходит & прямой ход \\
+		\hline
+		26 & Поиск person по примеру & ... & прямой ход \\
+		\hline
+		27 & Поиск person по примеру & person(klyuge, '+7912571026", ad('volgograd', 'varshavshkoe sh.', 52, 83), transport('water\_bike', 213124, '21.11.2007'))., Property = 'water\_bike', Cost = 213124 & прямой ход \\
+		\hline
+		28 & Общий пример найден, вывод & Name = klyuge, Property = 'water\_bike', Cost = 213124 & прямой ход \\
+		\hline
+		29 & Поиск person по примеру & person(toporova, '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 33, 45), car('mitsubishi', 'green', 12836628, 2018, 'saint-petersburg')), не подходит & откат, т.к дошли до конца БЗ (следовательно, тупик)  \\
+		\hline
+			Вывод: & подстановка & Т.к. стек пуст - успех и рез. ячейке подстановка
+			 &  \\
+		\hline
+	\end{tabular}
+\end{table}

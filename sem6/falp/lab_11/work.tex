@@ -1,0 +1,79 @@
+% задание и сама лабораторная работа
+% Для листинга кода:
+\lstset{ %
+	language=lisp,                 % выбор языка для подсветки (здесь это С++)
+	basicstyle=\small\sffamily, % размер и начертание шрифта для подсветки кода
+	numbers=left,               % где поставить нумерацию строк (слева\справа)
+	numberstyle=\tiny,           % размер шрифта для номеров строк
+	stepnumber=1,                   % размер шага между двумя номерами строк
+	numbersep=5pt,                % как далеко отстоят номера строк от подсвечиваемого кода
+	showspaces=false,            % показывать или нет пробелы специальными отступами
+	showstringspaces=false,      % показывать или нет пробелы в строках
+	showtabs=false,             % показывать или нет табуляцию в строках
+	frame=single,              % рисовать рамку вокруг кода
+	tabsize=2,                 % размер табуляции по умолчанию равен 2 пробелам
+	captionpos=t,              % позиция заголовка вверху [t] или внизу [b] 
+	breaklines=true,           % автоматически переносить строки (да\нет)
+	breakatwhitespace=false, % переносить строки только если есть пробел
+	escapeinside={\#*}{*)}   % если нужно добавить комментарии в коде
+}
+\newpage
+\section*{Задание 1}
+\addcontentsline{toc}{section}{\tocsecindent{Задание 1}}
+
+\Large Разработать свою программу - «Телефонный справочник». Протестировать работу программы. 
+\newline
+
+
+\begin{lstlisting}[language=prolog,label=some-code1,caption=Задание 1]
+domains
+name = full_name(string, string)
+addr = address(string, integer, integer)
+ph_number = phone_number(string)
+
+predicates
+person(name, ph_number, addr)
+
+clauses
+person(full_name("galya","ivanova"), phone_number("+79167732232"), address("pushkina", 7, 228)).
+person(full_name("ivan","ivanov"), phone_number("+79187782232"), address("antonova", 7, 228)).
+person(full_name("sveta","olova"), phone_number("+7918386198"), address("varshavshkoe sh.", 20, 607)).
+person(full_name("lena","zayceva"), phone_number("+7914429197"), address("lermontovskiy pr.", 38, 608)).
+person(full_name("masha","mishkina"), phone_number("+79119403462"), address("pushkina", 23, 531)).
+person(full_name("galya","mishkina"), phone_number("+79156037346"), address("lermontovskiy pr.", 87, 408)).
+person(full_name("olga","toporova"), phone_number("+79120545958"), address("antonova", 37, 1311)).
+person(full_name("galya","mishkina"), phone_number("+79165234292"), address("solomonova", 14, 251)).
+person(full_name("lena","mishkina"), phone_number("+79146875530"), address("gadjieva", 2, 169)).
+person(full_name("zhenya","toporova"), phone_number("+79155926761"), address("solomonova", 92, 1017)).
+person(full_name("olga","klyuge"), phone_number("+79142818537"), address("solomonova", 34, 447)).
+person(full_name("sveta","mishkina"), phone_number("+79155261771"), address("lermontovskiy pr.", 36, 1220)).
+person(full_name("masha","koneva"), phone_number("+79166707488"), address("solomonova", 52, 488)).
+person(full_name("ira","olova"), phone_number("+79146762880"), address("solomonova", 1, 905)).
+person(full_name("galya","olova"), phone_number("+7913734601"), address("gadjieva", 57, 400)).
+person(full_name("zhenya","klyuge"), phone_number("+79130028225"), address("venevskaya", 8, 968)).
+person(full_name("lena","koneva"), phone_number("+79126660871"), address("gadjieva", 24, 641)).
+person(full_name("galya","toporova"), phone_number("+79133185594"), address("pushkina", 8, 759)).
+person(full_name("olga","olova"), phone_number("+79143617869"), address("lermontovskiy pr.", 44, 428)).
+person(full_name("ira","mishkina"), phone_number("+7912480150"), address("venevskaya", 5, 453)).
+person(full_name("masha","koneva"), phone_number("+7911155183"), address("pushkina", 15, 77)).
+person(full_name("masha","mishkina"), phone_number("+79120780798"), address("lermontovskiy pr.", 48, 324)).
+person(full_name("lena","zayceva"), phone_number("+79140122961"), address("antonova", 54, 289)).
+person(full_name("ira","koneva"), phone_number("+79160220109"), address("antonova", 6, 900)).
+person(full_name("masha","olova"), phone_number("+79136706172"), address("gadjieva", 17, 1111)).
+person(full_name("nastya","zayceva"), phone_number("+79163335164"), address("lermontovskiy pr.", 16, 266)).
+person(full_name("sveta","nikitina"), phone_number("+79138221287"), address("antonova", 17, 264)).
+person(full_name("zhenya","zayceva"), phone_number("+79140395245"), address("antonova", 88, 221)).
+person(full_name("olga","mishkina"), phone_number("+79145185736"), address("venevskaya", 91, 188)).
+person(full_name("olga","mishkina"), phone_number("+7914408016"), address("varshavshkoe sh.", 53, 977)).
+person(full_name("lena","klyuge"), phone_number("+79144181307"), address("antonova", 41, 637)).
+person(full_name("sveta","nikitina"), phone_number("+79128189167"), address("antonova", 31, 1275)).
+
+goal 
+person(full_name("lena","klyuge"), X, Y), write (X, " ", Y), nl.
+\end{lstlisting} 
+\textbf{Вывод программы:}
+
+\includegraphics{"img/Screenshot_1.png"}
+
+
+    

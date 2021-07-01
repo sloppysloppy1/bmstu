@@ -1,0 +1,301 @@
+% --- ugly internals for language definition ---
+%
+\makeatletter
+\lstset{
+	captionpos = below,
+	frame      = single,
+	columns    = fullflexible,
+	basicstyle = \small\sffamily,
+}
+% initialisation of user macros
+\newcommand\PrologPredicateStyle{}
+\newcommand\PrologVarStyle{}
+\newcommand\PrologAnonymVarStyle{}
+\newcommand\PrologAtomStyle{}
+\newcommand\PrologOtherStyle{}
+\newcommand\PrologCommentStyle{}
+
+% useful switches (to keep track of context)
+\newif\ifpredicate@prolog@
+\newif\ifwithinparens@prolog@
+
+% save definition of underscore for test
+\lst@SaveOutputDef{`_}\underscore@prolog
+
+% local variables
+\newcount\currentchar@prolog
+
+\newcommand\@testChar@prolog%
+{%
+	% if we're in processing mode...
+	\ifnum\lst@mode=\lst@Pmode%
+	\detectTypeAndHighlight@prolog%
+	\else
+	% ... or within parentheses
+	\ifwithinparens@prolog@%
+	\detectTypeAndHighlight@prolog%
+	\fi
+	\fi
+	% Some housekeeping...
+	\global\predicate@prolog@false%
+}
+
+% helper macros
+\newcommand\detectTypeAndHighlight@prolog
+{%
+	% First, assume that we have an atom.
+	\def\lst@thestyle{\PrologAtomStyle}%
+	% Test whether we have a predicate and modify the style accordingly.
+	\ifpredicate@prolog@%
+	\def\lst@thestyle{\PrologPredicateStyle}%
+	\else
+	% Test whether we have a predicate and modify the style accordingly.
+	\expandafter\splitfirstchar@prolog\expandafter{\the\lst@token}%
+	% Check whether the identifier starts by an underscore.
+	\expandafter\ifx\@testChar@prolog\underscore@prolog%
+	% Check whether the identifier is '_' (anonymous variable)
+	\ifnum\lst@length=1%
+	\let\lst@thestyle\PrologAnonymVarStyle%
+	\else
+	\let\lst@thestyle\PrologVarStyle%
+	\fi
+	\else
+	% Check whether the identifier starts by a capital letter.
+	\currentchar@prolog=65
+	\loop
+	\expandafter\ifnum\expandafter`\@testChar@prolog=\currentchar@prolog%
+	\let\lst@thestyle\PrologVarStyle%
+	\let\iterate\relax
+	\fi
+	\advance \currentchar@prolog by 1
+	\unless\ifnum\currentchar@prolog>90
+	\repeat
+	\fi
+	\fi
+}
+\newcommand\splitfirstchar@prolog{}
+\def\splitfirstchar@prolog#1{\@splitfirstchar@prolog#1\relax}
+\newcommand\@splitfirstchar@prolog{}
+\def\@splitfirstchar@prolog#1#2\relax{\def\@testChar@prolog{#1}}
+
+% helper macro for () delimiters
+\def\beginlstdelim#1#2%
+{%
+	\def\endlstdelim{\PrologOtherStyle #2\egroup}%
+	{\PrologOtherStyle #1}%
+	\global\predicate@prolog@false%
+	\withinparens@prolog@true%
+	\bgroup\aftergroup\endlstdelim%
+}
+
+% language name
+\newcommand\lang@prolog{Prolog-pretty}
+% ``normalised'' language name
+\expandafter\lst@NormedDef\expandafter\normlang@prolog%
+\expandafter{\lang@prolog}
+
+% language definition
+\expandafter\expandafter\expandafter\lstdefinelanguage\expandafter%
+{\lang@prolog}
+{%
+	language            = Prolog,
+	keywords            = {},      % reset all preset keywords
+	showstringspaces    = false,
+	alsoletter          = (,
+	alsoother           = @$,
+	moredelim           = **[is][\beginlstdelim{(}{)}]{(}{)},
+	MoreSelectCharTable =
+	\lst@DefSaveDef{`(}\opparen@prolog{\global\predicate@prolog@true\opparen@prolog},
+}
+
+% Hooking into listings to test each ``identifier''
+\newcommand\@ddedToOutput@prolog\relax
+\lst@AddToHook{Output}{\@ddedToOutput@prolog}
+
+\lst@AddToHook{PreInit}
+{%
+	\ifx\lst@language\normlang@prolog%
+	\let\@ddedToOutput@prolog\@testChar@prolog%
+	\fi
+}
+
+\lst@AddToHook{DeInit}{\renewcommand\@ddedToOutput@prolog{}}
+
+\makeatother
+%
+% --- end of ugly internals ---
+
+
+% --- definition of a custom style similar to that of Pygments ---
+% custom colors
+\definecolor{PrologPredicate}{RGB}{000,031,255}
+\definecolor{PrologVar}      {RGB}{024,021,125}
+\definecolor{PrologAnonymVar}{RGB}{000,127,000}
+\definecolor{PrologAtom}     {RGB}{186,032,032}
+\definecolor{PrologComment}  {RGB}{063,128,127}
+\definecolor{PrologOther}    {RGB}{000,000,000}
+
+% redefinition of user macros for Prolog style
+\renewcommand\PrologPredicateStyle{\color{PrologPredicate}}
+\renewcommand\PrologVarStyle{\color{PrologVar}}
+\renewcommand\PrologAnonymVarStyle{\color{PrologAnonymVar}}
+\renewcommand\PrologAtomStyle{\color{PrologAtom}}
+\renewcommand\PrologCommentStyle{\itshape\color{PrologComment}}
+\renewcommand\PrologOtherStyle{\color{PrologOther}}
+
+% custom style definition 
+\lstdefinestyle{Prolog-pygsty}
+{
+	language     = Prolog-pretty,
+	upquote      = true,
+	stringstyle  = \PrologAtomStyle,
+	commentstyle = \PrologCommentStyle,
+	literate     =
+	{:-}{{\PrologOtherStyle :-}}2
+	{,}{{\PrologOtherStyle ,}}1
+	{.}{{\PrologOtherStyle .}}1
+}
+
+
+
+\newpage
+\section*{Постановка задачи}
+\addcontentsline{toc}{section}{\tocsecindent{Постановка задачи}}
+
+\Large Используя  базу знаний, хранящую знания (лаб. 13):
+\begin{enumerate}
+
+	\item «Телефонный справочник»: Фамилия, №тел, Адрес – структура (Город, Улица, №дома, №кв);
+	\item «Автомобили»: Фамилия владельца, Марка, Цвет, Стоимость, и др;
+	\item « Вкладчики банков»: Фамилия, Банк, счет, сумма, др.
+\end{enumerate}
+Владелец может иметь несколько телефонов, автомобилей, вкладов (Факты). В разных городах есть однофамильцы, в одном городе – фамилия уникальна.
+
+Используя конъюнктивное правило и простой вопрос, обеспечить возможность поиска:
+По Марке и Цвету автомобиля найти Фамилию, Город, Телефон и Банки, в которых владелец автомобиля имеет вклады. Лишней информации не находить и не передавать!!!
+Владельцев может быть несколько (не более 3-х), один и ни одного.
+\begin{enumerate}
+\item	Для каждого из трех вариантов словесно подробно описать порядок формирования ответа (в виде таблицы). При этом, указать – отметить моменты очередного запуска алгоритма унификации и полный результат его работы. Обосновать следующий шаг работы системы. Выписать унификаторы – подстановки. Указать моменты, причины и результат отката, если он есть.
+\item	Для случая нескольких владельцев (2-х): приведите примеры (таблицы) работы системы при разных порядках следования в БЗ  процедур, и знаний в них: («Телефонный справочник», «Автомобили», «Вкладчики банков», или: «Автомобили», «Вкладчики банков», «Телефонный справочник»). Сделайте вывод: Одинаковы ли: множество работ и объем работ в разных случаях?
+\item	Оформите 2 таблицы, демонстрирующие порядок работы алгоритма унификации вопроса и подходящего заголовка правила (для двух случаев из пункта 2) и укажите результаты его работы: ответ и побочный эффект.
+\end{enumerate}
+
+\newpage
+\section*{Листинг программы}
+\addcontentsline{toc}{section}{\tocsecindent{Листинг программы}}
+Ниже представлен листинг программы:
+\lstinputlisting[
+style      = Prolog-pygsty,
+caption    = {Задания 1 и 2},
+]{src/1.pro}
+
+	\section*{Описание порядка поиска ответов}
+\addcontentsline{toc}{section}{\tocsecindent{Описание порядка поиска ответов}}
+Ниже представлен вывод при трех ответах. Для меньшего числа ответов алгоритм будет выглядеть аналогично. \\
+При разных порядках следования в БЗ  процедур и знаний в них, множество и объем работ будут одинаковы, поскольку алгоритму поиска в любом случае придется дойти до конца БЗ.
+\begin{table}
+	\caption{Задания 1 и 2. Вывод при трех ответах}
+\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+	\hline
+	№ шага & Сравниваемые термы; подстановка, если есть  & Результат  & Дальнейшие действия: прямой ход или откат (к чему приводит?) \\
+	\hline
+	1 & Подстановка (связывание) Car\_brand = 'mitsubishi', Car\_color = 'green' в запрос get\_stuff(Car\_color, Car\_brand, Lname, Town, Ph\_num, Bank) & get\_stuff('green', 'mitsubishi', Lname, Town, Ph\_num, Bank) & прямой ход \\
+	\hline
+	2 & Поиск совпадений и подстановка (связывание) 'mitsubishi', 'green' в соответственное правило  get\_stuff(Car\_color, Car\_brand, Lname, Town, Ph\_num, Bank) &get\_stuff('green', 'mitsubishi', Lname, Town, Ph\_num, Bank) & прямой ход \\
+	\hline
+	3 & Подстановка Car\_brand = 'mitsubishi', Car\_color = 'green' в car(Lname, Car\_brand, Car\_color, \_, \_, Town) & Создается пример car(Lname, 'mitsubishi', 'green', \_, \_, Town) & прямой ход \\
+	\hline
+	4 & Поиск car по примерy & car('zayceva', 'geely', 'white', 6409914, 2015, 'kasimov'), не подходит & прямой ход \\
+	\hline
+	5 & Поиск car по примерy & ... & прямой ход \\
+	\hline
+	6 & Поиск car по примерy & car('toporova', 'mitsubishi', 'green', 12836628, 2018, 'saint-petersburg'), Lname = 'toporova', Town = 'saint-petersburg' & прямой ход \\
+	\hline
+	7 & Подстановка в person(Lname, Ph\_num, ad(Town, \_, \_, \_)) Lname = 'toporova', Town = 'saint-petersburg' & Создается пример person('toporova', Ph\_num, ad('saint-petersburg', \_, \_, \_)) & прямой ход \\
+	\hline
+	8 & Поиск person по примеру & person('klyuge', '+7912571026', ad('volgograd', 'varshavshkoe sh.', 52, 83)), не подходит & откат \\
+	\hline
+	9 & Поиск person по примеру & ... & откат \\
+	\hline
+	10 & Поиск person по примеру & person('toporova', '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 100, 1151)), Lname = 'toporova' и Ph\_num = '+79165072034' & прямой ход \\
+	\hline
+	11 & Подстановка в bank\_client(Lname, Bank, \_,\_, \_, Town) Lname = 'toporova', Bank = Bank, Town = 'saint-petersburg' & Создается пример bank\_client('toporova', Bank, \_, \_, \_, 'saint-petersburg') & прямой ход \\
+	\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+	
+\begin{tabular}{|p{1cm}|p{5cm}|p{5cm}|p{5cm}|}
+	\hline
+	12 & Поиск bank\_client по примеру & bank\_client('mishkina', 'tinkoff', 'payment', 2439027, 8, 'moscow')., не подходит & откат \\
+	\hline
+	13 & Поиск bank\_client по примеру & ... & откат \\
+	\hline
+	14 & Поиск bank\_client по примеру & bank\_client('toporova', 'tinkoff', 'savings', 60815175, 9, 'saint-petersburg'), Bank = 'tinkoff' & прямой ход \\
+	\hline
+	15 & Общий пример найден, вывод & Car\_color=green, Car\_brand=mitsubishi, Lname=toporova, Town=saint-petersburg, Ph\_num=+79165072034, Bank=tinkoff &  откат, снова ищем по bank\_client\\
+	\hline
+	16 & Поиск bank\_client по примеру & ... & откат \\
+	\hline
+	17 & Поиск bank\_client по примеру & bank\_client('toporova', 'sberbank', 'credit', 37214889, 10, 'saint-petersburg')., Bank = 'sberbank' & прямой ход \\
+	\hline
+	18 & Общий пример найден, вывод & Car\_color=green, Car\_brand=mitsubishi, Lname=toporova, Town=saint-petersburg, Ph\_num=+79165072034, Bank=sberbank &  откат, снова ищем по bank\_client\\
+	\hline
+	19 & Поиск bank\_client по примеру & ... & откат \\
+	\hline
+	20 & Поиск bank\_client по примеру & bank\_client('toporova', 'sberbank', 'savings', 51895925, 10, 'saint-petersburg'), Bank = 'sberbank' & прямой ход \\
+	\hline
+	21 & Общий пример найден, вывод & Car\_color=green, Car\_brand=mitsubishi, Lname=toporova, Town=saint-petersburg, Ph\_num=+79165072034, Bank=sberbank &  откат, снова ищем по bank\_client и ничего не находим. Откатываемся до person\\
+	\hline
+	22 & Поиск person по примеру & ... & ничего не находим. Откатываемся до car \\
+	\hline
+	23 & Поиск car по примеру & ... & ничего не находим, однако мы уже дошли до конца БЗ. Конец \\
+	\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+	\caption{Задание 3. Алгоритм унификации}
+\begin{tabular}{|p{1cm}|p{4cm}|p{5cm}|p{1cm}|p{5cm}|}
+	\hline
+	шаг унификации & результирующая ячейка & рабочее поле & пункт алгоритма & стек \\
+	\hline
+	0 &  &  &  & get\_stuff('green', 'mitsubishi', Lname, Town, Ph\_num, Bank) = get\_stuff(Car\_color, Car\_brand, Lname, Town, Ph\_num, Bank) \\
+	\hline
+	1 &  & get\_stuff('green', 'mitsubishi', Lname, Town, Ph\_num, Bank) = get\_stuff(Car\_color, Car\_brand, Lname, Town, Ph\_num, Bank) &  & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = Lname, Ph\_num = Ph\_num, Bank = Bank \\
+	\hline
+	2 & Car\_color = 'green', Car\_brand = 'mitsubishi' & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = Lname, Ph\_num = Ph\_num, Bank = Bank &  & Lname = Lname, Town = Town, Ph\_num = Ph\_num, Bank = Bank \\
+	\hline
+	3 & Car\_color = 'green', Car\_brand = 'mitsubishi' & Lname = Lname, Town = Town &  & car(Lname, 'mitsubishi', 'green', \_, \_, Town);  Ph\_num = Ph\_num, Bank = Bank \\
+	\hline
+	4 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = Lname, Town = Town & car(Lname, 'mitsubishi', 'green', \_, \_, Town) &  & car('toporova', 'mitsubishi', 'green', 12836628, 2018, 'saint-petersburg');  Ph\_num = Ph\_num, Bank = Bank \\
+	\hline
+	5 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg' & car('toporova', 'mitsubishi', 'green', 12836628, 2018, 'saint-petersburg'), Lname = 'toporova', Town = 'saint-petersburg' &  & Ph\_num = Ph\_num, Bank = Bank \\
+	\hline
+	6 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg' & Ph\_num = Ph\_num &  & person('toporova', Ph\_num, ad('saint-petersburg', \_, \_, \_)); Bank = Bank \\
+	\hline
+	7 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg', Ph\_num = Ph\_num & person('toporova', Ph\_num, ad('saint-petersburg', \_, \_, \_)) &  & person('toporova', '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 100, 1151)); Bank = Bank \\
+	\hline
+\end{tabular}
+\end{table}
+
+\begin{table}
+\begin{tabular}{|p{1cm}|p{4cm}|p{5cm}|p{1cm}|p{5cm}|}
+	\hline
+	8 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg', Ph\_num = '+79165072034' & person('toporova', '+79165072034', ad('saint-petersburg', 'varshavshkoe sh.', 100, 1151)). &  & Bank = Bank \\
+	\hline
+	9 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg', Ph\_num = '+79165072034' & Bank = Bank &  & bank\_client(Lname, Bank, \_, \_, \_, Town) \\
+	\hline
+	10 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg', Ph\_num = '+79165072034', Bank = Bank & bank\_client('toporova', Bank, \_, \_, \_, 'saint-petersburg') &  & bank\_client('toporova', 'tinkoff', 'savings', 60815175, 9, 'saint-petersburg') \\
+	\hline
+	11 & Car\_color = 'green', Car\_brand = 'mitsubishi', Lname = 'toporova', Town = 'saint-petersburg', Ph\_num = '+79165072034', Bank = 'tinkoff' & bank\_client('toporova', 'tinkoff', 'savings', 60815175, 9, 'saint-petersburg'), Bank = 'tinkoff' &  &  \\
+	\hline
+	Вывод: & подстановка & Т.к. стек пуст – успех и
+	в рез. ячейке -  подстановка
+	&  &  \\
+	\hline
+
+\end{tabular}
+\end{table}
+    

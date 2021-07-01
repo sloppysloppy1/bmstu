@@ -1,0 +1,242 @@
+% --- ugly internals for language definition ---
+%
+\makeatletter
+\lstset{
+	captionpos = below,
+	frame      = single,
+	columns    = fullflexible,
+	basicstyle = \small\sffamily,
+}
+% initialisation of user macros
+\newcommand\PrologPredicateStyle{}
+\newcommand\PrologVarStyle{}
+\newcommand\PrologAnonymVarStyle{}
+\newcommand\PrologAtomStyle{}
+\newcommand\PrologOtherStyle{}
+\newcommand\PrologCommentStyle{}
+
+% useful switches (to keep track of context)
+\newif\ifpredicate@prolog@
+\newif\ifwithinparens@prolog@
+
+% save definition of underscore for test
+\lst@SaveOutputDef{`_}\underscore@prolog
+
+% local variables
+\newcount\currentchar@prolog
+
+\newcommand\@testChar@prolog%
+{%
+	% if we're in processing mode...
+	\ifnum\lst@mode=\lst@Pmode%
+	\detectTypeAndHighlight@prolog%
+	\else
+	% ... or within parentheses
+	\ifwithinparens@prolog@%
+	\detectTypeAndHighlight@prolog%
+	\fi
+	\fi
+	% Some housekeeping...
+	\global\predicate@prolog@false%
+}
+
+% helper macros
+\newcommand\detectTypeAndHighlight@prolog
+{%
+	% First, assume that we have an atom.
+	\def\lst@thestyle{\PrologAtomStyle}%
+	% Test whether we have a predicate and modify the style accordingly.
+	\ifpredicate@prolog@%
+	\def\lst@thestyle{\PrologPredicateStyle}%
+	\else
+	% Test whether we have a predicate and modify the style accordingly.
+	\expandafter\splitfirstchar@prolog\expandafter{\the\lst@token}%
+	% Check whether the identifier starts by an underscore.
+	\expandafter\ifx\@testChar@prolog\underscore@prolog%
+	% Check whether the identifier is '_' (anonymous variable)
+	\ifnum\lst@length=1%
+	\let\lst@thestyle\PrologAnonymVarStyle%
+	\else
+	\let\lst@thestyle\PrologVarStyle%
+	\fi
+	\else
+	% Check whether the identifier starts by a capital letter.
+	\currentchar@prolog=65
+	\loop
+	\expandafter\ifnum\expandafter`\@testChar@prolog=\currentchar@prolog%
+	\let\lst@thestyle\PrologVarStyle%
+	\let\iterate\relax
+	\fi
+	\advance \currentchar@prolog by 1
+	\unless\ifnum\currentchar@prolog>90
+	\repeat
+	\fi
+	\fi
+}
+\newcommand\splitfirstchar@prolog{}
+\def\splitfirstchar@prolog#1{\@splitfirstchar@prolog#1\relax}
+\newcommand\@splitfirstchar@prolog{}
+\def\@splitfirstchar@prolog#1#2\relax{\def\@testChar@prolog{#1}}
+
+% helper macro for () delimiters
+\def\beginlstdelim#1#2%
+{%
+	\def\endlstdelim{\PrologOtherStyle #2\egroup}%
+	{\PrologOtherStyle #1}%
+	\global\predicate@prolog@false%
+	\withinparens@prolog@true%
+	\bgroup\aftergroup\endlstdelim%
+}
+
+% language name
+\newcommand\lang@prolog{Prolog-pretty}
+% ``normalised'' language name
+\expandafter\lst@NormedDef\expandafter\normlang@prolog%
+\expandafter{\lang@prolog}
+
+% language definition
+\expandafter\expandafter\expandafter\lstdefinelanguage\expandafter%
+{\lang@prolog}
+{%
+	language            = Prolog,
+	keywords            = {},      % reset all preset keywords
+	showstringspaces    = false,
+	alsoletter          = (,
+	alsoother           = @$,
+	moredelim           = **[is][\beginlstdelim{(}{)}]{(}{)},
+	MoreSelectCharTable =
+	\lst@DefSaveDef{`(}\opparen@prolog{\global\predicate@prolog@true\opparen@prolog},
+}
+
+% Hooking into listings to test each ``identifier''
+\newcommand\@ddedToOutput@prolog\relax
+\lst@AddToHook{Output}{\@ddedToOutput@prolog}
+
+\lst@AddToHook{PreInit}
+{%
+	\ifx\lst@language\normlang@prolog%
+	\let\@ddedToOutput@prolog\@testChar@prolog%
+	\fi
+}
+
+\lst@AddToHook{DeInit}{\renewcommand\@ddedToOutput@prolog{}}
+
+\makeatother
+%
+% --- end of ugly internals ---
+
+
+% --- definition of a custom style similar to that of Pygments ---
+% custom colors
+\definecolor{PrologPredicate}{RGB}{000,031,255}
+\definecolor{PrologVar}      {RGB}{024,021,125}
+\definecolor{PrologAnonymVar}{RGB}{000,127,000}
+\definecolor{PrologAtom}     {RGB}{186,032,032}
+\definecolor{PrologComment}  {RGB}{063,128,127}
+\definecolor{PrologOther}    {RGB}{000,000,000}
+
+% redefinition of user macros for Prolog style
+\renewcommand\PrologPredicateStyle{\color{PrologPredicate}}
+\renewcommand\PrologVarStyle{\color{PrologVar}}
+\renewcommand\PrologAnonymVarStyle{\color{PrologAnonymVar}}
+\renewcommand\PrologAtomStyle{\color{PrologAtom}}
+\renewcommand\PrologCommentStyle{\itshape\color{PrologComment}}
+\renewcommand\PrologOtherStyle{\color{PrologOther}}
+
+% custom style definition 
+\lstdefinestyle{Prolog-pygsty}
+{
+	language     = Prolog-pretty,
+	upquote      = true,
+	stringstyle  = \PrologAtomStyle,
+	commentstyle = \PrologCommentStyle,
+	literate     =
+	{:-}{{\PrologOtherStyle :-}}2
+	{,}{{\PrologOtherStyle ,}}1
+	{.}{{\PrologOtherStyle .}}1
+}
+
+
+
+\newpage
+\section*{Постановка задачи}
+\addcontentsline{toc}{section}{\tocsecindent{Постановка задачи}}
+
+\Large Используя хвостовую рекурсию, разработать программу, позволяющую найти 
+\begin{enumerate}
+	\item \textbf{n!};
+	\item \textbf{n-е число Фибоначчи}.
+\end{enumerate}
+
+Убедиться в правильности результатов.
+Для каждого случая пункта 2 обосновать необходимость всех условий тела. 
+Для одного из вариантов ВОПРОСА и каждого варианта задания 2 составить таблицу, отражающую конкретный порядок работы системы: \\
+Т.к. резольвента хранится в виде стека, то состояние резольвенты требуется отображать в столбик: вершина – сверху! Новый шаг надо начинать с нового состояния резольвенты!
+
+
+\newpage
+\section*{Листинг программы}
+\addcontentsline{toc}{section}{\tocsecindent{Листинг программы}}
+Ниже представлен листинг программы:
+\lstinputlisting[
+style      = Prolog-pygsty,
+caption    = {Задания 1 и 2},
+]{src/1.pro}
+
+\section*{Описание работы системы}
+\addcontentsline{toc}{section}{\tocsecindent{Описание порядка поиска ответов}}
+
+Ниже представлен алгоритм поиска ответов на вопросы fact(2, Result) и fibb(2, Result).
+
+\begin{table}
+	\caption{Описание работы системы при решении факториала}
+	\begin{tabular}{|p{1.2cm}|p{5cm}|p{5cm}|p{5cm}|}
+		\hline
+		№ шага & Состояние резольвенты, и вывод: дальнейшие действия (почему?) & Для каких термов запускается алгоритм унификации: Т1=Т2 и каков результат (и подстановка) & Дальнейшие действия: прямой ход или откат (почему и к чему приводит?) \\
+		\hline
+		1 & Резольвента: \newline fact(2, Result). Начинается поиск совпадений по БЗ &  & прямой ход \\
+		\hline
+		2 & Резольвента: \newline fact(2, Result). & Нашли подходящее правило: fact(Curr, Next) :-  Cur = Curr - 1, fact(Cur, Res), Next = Res * Curr. Подставляем Curr = 2, Next = Result & прямой ход \\
+		\hline
+		3 & Резольвента: \newline Cur = Curr - 1, \newline fact(2, Result). & Пробуем cвязать: Сur = 2 - 1 = 1, удача, идем дальше.   & прямой ход, подставляем Cur = 1 в fact(Cur, Res)\\
+		\hline
+		4 & Резольвента: \newline fact(1, Res), \newline fact(2, Result). & Поиск совпадений по БЗ. Нашли подходящее правило: fact(Curr, Next) :-  Cur = Curr - 1, fact(Cur, Res), Next = Res * Curr. Подставляем Curr = 1, Next = Res  & прямой ход \\
+		\hline
+		5 & Резольвента: \newline Cur = Curr - 1, \newline fact(2, Result). & Пробуем cвязать: Сur = 1 - 1 = 0, удача, идем дальше.   & прямой ход, подставляем Cur = 0 в fact(Cur, Res) \\
+		\hline
+		6 & Резольвента: \newline fact(0, Res), \newline fact(1, Res), \newline fact(2, Result). & Поиск совпадений по БЗ. Нашли подходящее правило: fact(0, 1) :- !. Подставляем Res = 1, один из вопросов решен.  & прямой ход \\
+		\hline
+		7 & Резольвента: \newline fact(1, Res), \newline fact(2, Result). & Пробуем cвязать: Next = Res * Curr = 1 * 1, (Res = 1 из предыдущего шага). Подставляем Res = 1, один из вопросов решен.  & прямой ход \\
+		\hline
+		8 & Резольвента: \newline fact(2, Result). & Пробуем cвязать: Next = Res * Curr = 1 * 2, (Res = 1 из предыдущего шага). Подставляем Result = Next = 2, вопрос решен.  & прямой ход \\
+		\hline
+		\textbf{Вывод}& Result = 2 &  & \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{table}
+	\caption{Описание работы системы при решении факториала}
+	\begin{tabular}{|p{1.2cm}|p{5cm}|p{5cm}|p{5cm}|}
+		\hline
+		№ шага & Состояние резольвенты, и вывод: дальнейшие действия (почему?) & Для каких термов запускается алгоритм унификации: Т1=Т2 и каков результат (и подстановка) & Дальнейшие действия: прямой ход или откат (почему и к чему приводит?) \\
+		\hline
+		1 & Резольвента: \newline fibb(2, Result). Начинается поиск совпадений по БЗ &  & прямой ход \\
+		\hline
+		2 & Резольвента: \newline fibb(2, Result). & Нашли подходящее правило: fibb(Curr, Next) :-  Cur = Curr - 1, Prev = Cur - 1, fibb(Cur, Cur\_Res), fibb(Prev, Prev\_Res), Next = Cur\_Res + Prev\_Res. Подставляем Curr = 2, Nex\t = Result & прямой ход \\
+		\hline
+		3 & Резольвента: \newline Cur = Curr - 1, \newline fact(2, Result). & Пробуем cвязать: Сur = 2 - 1 = 1, удача, идем дальше.   & прямой ход, подставляем Cur = 1 в fact(Cur, Res)\\
+		\hline
+		4 & Резольвента: \newline Prev = Cur - 1, \newline fact(2, Result). & Пробуем cвязать: Prev = 1 - 1 = 0, удача, идем дальше.   & прямой ход, подставляем Cur = 1 в fibb(Cur, Cur\_Res)\\
+		\hline
+		5 & Резольвента: \newline fibb(1, Cur\_Res) \newline fibb(2, Result). & Поиск совпадений по БЗ. Нашли подходящее правило: fibb(1, 1) :- !. Подставляем Cur\_Res = 1, один из вопросов решен.  & прямой ход, подставляем Prev = 0 в fact(Prev, Prev\_Res) \\
+		\hline
+		6 & Резольвента: \newline fibb(0, Prev\_Res) \newline fibb(2, Result). & Поиск совпадений по БЗ. Нашли подходящее правило: fibb(0, 0) :- !. Подставляем Prev\_Res = 0, один из вопросов решен.  & прямой ход\\
+		\hline
+		8 & Резольвента: \newline fibb(2, Result). & Пробуем cвязать: Next = Cur\_Res + Prev\_Res = 1 + 0. Подставляем Result = Next = 1, вопрос решен.  & прямой ход \\
+		\hline
+		\textbf{Вывод}& Result = 1 &  & \\
+		\hline
+	\end{tabular}
+\end{table}
+
